@@ -7,77 +7,78 @@ use Exception;
 class PostgreSQLConditionBuilder
 {
     public function buildCondition(
-        array $array,
-        string $op1 = 'AND',
-        string $op2 = 'OR',
-        array $tests = [],
-        array $replaces = []
-    ): string
+        array  $array,
+        string $firstLevelOperator = 'AND',
+        string $secondLevelOperator = 'OR',
+        array  $comparisonOperators = [],
+        array  $replaces = []
+    ): array
     {
         $this->verifyArray($array);
+        $this->verifyComparisonOperators($comparisonOperators);
+        $this->verifyReplaces($replaces);
 
-        $cond = $this->neutralCondition($op1);
+        $cond = $this->neutralCondition($firstLevelOperator);
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 if (count($value) > 0) {
-                    $cond .= " $op1 (" . $this->neutralCondition($op2);
-                    foreach ($value as $v) {
-                        $v = PostgreSQLFormatter::formatValueForSql($v);
-                        $cond .= " $op2 " . $this->buildComparator($tests, $key, $v, $replaces);
+                    $cond .= " $firstLevelOperator (" . $this->neutralCondition($secondLevelOperator);
+                    foreach ($value as $n => $v) {
+                        $cond .= " $secondLevelOperator " . $this->buildComparator($comparisonOperators, $key, $v, $replaces, $n);
                     }
                     $cond .= ")";
                 }
             } else {
-                $value = PostgreSQLFormatter::formatValueForSql($value);
-                $cond .= " $op1 " . $this->buildComparator($tests, $key, $value, $replaces);
+                $cond .= " $firstLevelOperator " . $this->buildComparator($comparisonOperators, $key, $value, $replaces);
             }
         }
-        return $cond;
+
+        $params = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $n => $v) {
+                    $params[$this->formatParamKey($key, $n)] = $v;
+                }
+            } else {
+                $params[$this->formatParamKey($key)] = $value;
+            }
+        }
+
+        return [$cond, $params];
+
+    }
+
+    private function formatParamKey(string $key, int $n = null): string
+    {
+        $paramKey = preg_replace('/[^A-Za-z0-9_]/', '', $key);
+        if ($n !== null) {
+            $paramKey .= $n;
+        }
+        return $paramKey;
     }
 
     private function verifyArray(array $array): void
     {
         foreach ($array as $key => $value)
         {
-            if (!preg_match('/^[A-Za-z0-9\._]+$/', $key)) {
+            if (!preg_match('/^[A-Za-z0-9_\.]+$/', $key)) {
                 throw new Exception('Invalid key: ' . $key);
             }
         }
     }
 
-//    public function buildLikeCondition(array $list_rows, string $pattern): string
-//    {
-//        $cond = " (1!=1 ";
-//
-//        foreach ($list_rows as $row) {
-//            $cond .= "OR $row ILIKE $pattern ";
-//        }
-//        $cond .= ") ";
-//
-//        return $cond;
-//    }
-
-    private function buildComparator($tests, $key, $value, $replaces): string
+    private function buildComparator($comparisonOperators, $key, mixed $value, $replaces, $n = null): string
     {
-        $key_sql = $key;
-        if (in_array($key, array_keys($replaces))) {
-            $key_sql = $replaces[$key];
+        $key_sql = $replaces[$key] ?? $key;
+
+        if ($value == 'NULL') {
+            return "$key_sql IS NULL";
         }
 
-        if (in_array($key, array_keys($tests))) {
-            $comparator  = $tests[$key];
-            if ($comparator == '?') {
-                return "jsonb_exists($key_sql,$value)";
-            } else {
-                return "$key_sql " . $comparator . " $value";
-            }
-        } else {
-            if ($value == 'NULL') {
-                return "$key_sql IS NULL";
-            } else {
-                return "$key_sql=$value";
-            }
-        }
+        $comparator = $comparisonOperators[$key] ?? '=';
+        $sqlParamKey = $this->formatParamKey($key, $n);
+
+        return "$key_sql$comparator:$sqlParamKey";
     }
 
 
@@ -91,6 +92,26 @@ class PostgreSQLConditionBuilder
         }
 
         throw new Exception('Unknown operator : ' . $op);
+    }
+
+    private function verifyComparisonOperators(array $comparisonOperators)
+    {
+        foreach ($comparisonOperators as $key => $value)
+        {
+            if (!in_array($value, ['=', '>', '<', '>=', '<=', '<>', '!=', 'LIKE', 'ILIKE', 'IN', 'NOT IN'])) {
+                throw new Exception('Invalid operator: ' . $value);
+            }
+        }
+    }
+
+    private function verifyReplaces(array $replaces)
+    {
+        foreach ($replaces as $key => $value)
+        {
+            if (!preg_match('/^[A-Za-z0-9_\.]+$/', $key)) {
+                throw new Exception('Invalid replace key: ' . $key);
+            }
+        }
     }
 
 
