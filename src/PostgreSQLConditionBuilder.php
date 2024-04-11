@@ -72,10 +72,6 @@ class PostgreSQLConditionBuilder
     {
         $key_sql = $replaces[$key] ?? $key;
 
-        if ($value == 'NULL') {
-            return "$key_sql IS NULL";
-        }
-
         $comparator = $comparisonOperators[$key] ?? '=';
         $sqlParamKey = self::formatParamKey($key, $n);
 
