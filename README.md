@@ -24,7 +24,7 @@ $array = [
 ];
 
 // Signature
-public function buildCondition(
+public function build(
     array  $array, // The array of conditions
     string $firstLevelOperator = 'AND', // The operator used between 1st level values (age=30 and ...)
     string $secondLevelOperator = 'OR', // The operator used if a value is an array (name=John OR name=Doe)
@@ -38,47 +38,43 @@ public function buildCondition(
 ```php
 use SWouters\PostgresqlTools\ConditionBuilder;
 
-$conditionBuilder = new ConditionBuilder();
-
 // name = "John Doe"
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'name' => 'John Doe',
 ]);
 
 // Firstname=John AND Lastname=Doe
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'firstname' => 'John',
     'lastname' => 'Doe',
 ]);
 
 // Firstname=John OR Lastname=Doe
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
         'firstname' => 'John',
         'lastname' => 'Doe',
 ], 'OR');
 
 // Name=John OR Name=Doe
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'name' => ['John', 'Doe'],
 ]);
 
 // (Name=John OR Name=Doe) AND Age=30
-$conditionBuilder->buildCondition(
-    [
-        'name' => ['John', 'Doe'],
-        'age' => 30,
-    ],
-);
+PostgreSQLConditionBuilder::buildCondition([
+    'name' => ['John', 'Doe'],
+    'age' => 30,
+]);
 
 // status != 'deleted'
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'status' => 'deleted',
 ], 'AND', 'OR', [
     'status' => '!='
 ]);
 
 // age=30 AND (name!=John AND name!=Doe)
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'age' => 30,
     'name' => ['John', 'Doe'],
 ], 'AND', 'AND', [
@@ -86,14 +82,14 @@ $conditionBuilder->buildCondition([
 ]);
 
 // user.name=John
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'name' => 'John',
 ], 'AND', 'OR', [], [
     'name' => 'user.name'
 ]);
 
 // created_at > '2024-03-01' AND created_at < '2024-03-02'
-$conditionBuilder->buildCondition([
+PostgreSQLConditionBuilder::buildCondition([
     'date_min' => '2024-03-01',
     'date_max' => '2024-03-02',
 ], 'AND', 'OR', [
@@ -108,9 +104,7 @@ $conditionBuilder->buildCondition([
 #### Execute query (example with Doctrine DBAL)
 
 ```php
-$conditionBuilder = new ConditionBuilder();
-
-$conditionBuilder->buildCondition([
+[$cond, $params] = PostgreSQLConditionBuilder::buildCondition([
     'name' => 'John Doe',
 ]);
 

@@ -6,7 +6,7 @@ use Exception;
 
 class PostgreSQLConditionBuilder
 {
-    public function buildCondition(
+    public static function buildCondition(
         array  $array,
         string $firstLevelOperator = 'AND',
         string $secondLevelOperator = 'OR',
@@ -14,22 +14,22 @@ class PostgreSQLConditionBuilder
         array  $replaces = []
     ): array
     {
-        $this->verifyArray($array);
-        $this->verifyComparisonOperators($comparisonOperators);
-        $this->verifyReplaces($replaces);
+        self::verifyArray($array);
+        self::verifyComparisonOperators($comparisonOperators);
+        self::verifyReplaces($replaces);
 
-        $cond = $this->neutralCondition($firstLevelOperator);
+        $cond = self::neutralCondition($firstLevelOperator);
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 if (count($value) > 0) {
-                    $cond .= " $firstLevelOperator (" . $this->neutralCondition($secondLevelOperator);
+                    $cond .= " $firstLevelOperator (" . self::neutralCondition($secondLevelOperator);
                     foreach ($value as $n => $v) {
-                        $cond .= " $secondLevelOperator " . $this->buildComparator($comparisonOperators, $key, $v, $replaces, $n);
+                        $cond .= " $secondLevelOperator " . self::buildComparator($comparisonOperators, $key, $v, $replaces, $n);
                     }
                     $cond .= ")";
                 }
             } else {
-                $cond .= " $firstLevelOperator " . $this->buildComparator($comparisonOperators, $key, $value, $replaces);
+                $cond .= " $firstLevelOperator " . self::buildComparator($comparisonOperators, $key, $value, $replaces);
             }
         }
 
@@ -37,10 +37,10 @@ class PostgreSQLConditionBuilder
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 foreach ($value as $n => $v) {
-                    $params[$this->formatParamKey($key, $n)] = $v;
+                    $params[self::formatParamKey($key, $n)] = $v;
                 }
             } else {
-                $params[$this->formatParamKey($key)] = $value;
+                $params[self::formatParamKey($key)] = $value;
             }
         }
 
@@ -48,7 +48,8 @@ class PostgreSQLConditionBuilder
 
     }
 
-    private function formatParamKey(string $key, int $n = null): string
+
+    private static function formatParamKey(string $key, int $n = null): string
     {
         $paramKey = preg_replace('/[^A-Za-z0-9_]/', '', $key);
         if ($n !== null) {
@@ -57,7 +58,7 @@ class PostgreSQLConditionBuilder
         return $paramKey;
     }
 
-    private function verifyArray(array $array): void
+    private static function verifyArray(array $array): void
     {
         foreach ($array as $key => $value)
         {
@@ -67,7 +68,7 @@ class PostgreSQLConditionBuilder
         }
     }
 
-    private function buildComparator($comparisonOperators, $key, mixed $value, $replaces, $n = null): string
+    private static function buildComparator($comparisonOperators, $key, mixed $value, $replaces, $n = null): string
     {
         $key_sql = $replaces[$key] ?? $key;
 
@@ -76,13 +77,13 @@ class PostgreSQLConditionBuilder
         }
 
         $comparator = $comparisonOperators[$key] ?? '=';
-        $sqlParamKey = $this->formatParamKey($key, $n);
+        $sqlParamKey = self::formatParamKey($key, $n);
 
         return "$key_sql$comparator:$sqlParamKey";
     }
 
 
-    private function neutralCondition(string $op): string
+    private static function neutralCondition(string $op): string
     {
         if ($op == 'AND') {
             return "1=1";
@@ -94,7 +95,7 @@ class PostgreSQLConditionBuilder
         throw new Exception('Unknown operator : ' . $op);
     }
 
-    private function verifyComparisonOperators(array $comparisonOperators)
+    private static function verifyComparisonOperators(array $comparisonOperators)
     {
         foreach ($comparisonOperators as $key => $value)
         {
@@ -104,7 +105,7 @@ class PostgreSQLConditionBuilder
         }
     }
 
-    private function verifyReplaces(array $replaces)
+    private static function verifyReplaces(array $replaces)
     {
         foreach ($replaces as $key => $value)
         {
