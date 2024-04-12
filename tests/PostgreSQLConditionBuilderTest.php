@@ -54,6 +54,16 @@ class PostgreSQLConditionBuilderTest extends TestCase
             'date_min' => 'created_at',
             'date_max' => 'created_at',
         ])[0]);
+
+        $this->assertEquals("1=1 AND created_at IS NULL", $builder->buildCondition([
+            'created_at' => null,
+        ])[0]);
+
+        $this->assertEquals("1=1 AND created_at IS NOT NULL", $builder->buildCondition([
+            'created_at' => null,
+        ], 'AND', 'OR', [
+            'created_at' => '!=',
+        ])[0]);
     }
 
     public function testBuildConditionParamsWithReplaces()

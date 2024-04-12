@@ -71,6 +71,14 @@ class PostgreSQLConditionBuilder
     private static function buildComparator($comparisonOperators, $key, mixed $value, $replaces, $n = null): string
     {
         $key_sql = $replaces[$key] ?? $key;
+        $comparator = $comparisonOperators[$key] ?? '=';
+
+        if ($value === null && $comparator === '=') {
+            return "$key_sql IS NULL";
+        }
+        if ($value === null && $comparator === '!=') {
+            return "$key_sql IS NOT NULL";
+        }
 
         $comparator = $comparisonOperators[$key] ?? '=';
         $sqlParamKey = self::formatParamKey($key, $n);
