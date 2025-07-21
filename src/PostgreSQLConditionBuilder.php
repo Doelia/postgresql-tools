@@ -7,13 +7,12 @@ use Exception;
 class PostgreSQLConditionBuilder
 {
     public static function buildCondition(
-        array  $array,
+        array $array,
         string $firstLevelOperator = 'AND',
         string $secondLevelOperator = 'OR',
-        array  $comparisonOperators = [],
-        array  $replaces = []
-    ): array
-    {
+        array $comparisonOperators = [],
+        array $replaces = []
+    ): array {
         self::verifyArray($array);
         self::verifyComparisonOperators($comparisonOperators);
         self::verifyReplaces($replaces);
@@ -45,11 +44,10 @@ class PostgreSQLConditionBuilder
         }
 
         return [$cond, $params];
-
     }
 
 
-    private static function formatParamKey(string $key, int $n = null): string
+    private static function formatParamKey(string $key, ?int $n = null): string
     {
         $paramKey = preg_replace('/[^A-Za-z0-9_]/', '', $key);
         if ($n !== null) {
@@ -60,15 +58,14 @@ class PostgreSQLConditionBuilder
 
     private static function verifyArray(array $array): void
     {
-        foreach ($array as $key => $value)
-        {
+        foreach ($array as $key => $value) {
             if (!preg_match('/^[A-Za-z0-9_\.]+$/', $key)) {
                 throw new Exception('Invalid key: ' . $key);
             }
         }
     }
 
-    private static function buildComparator($comparisonOperators, $key, mixed $value, $replaces, $n = null): string
+    private static function buildComparator(array $comparisonOperators, string $key, mixed $value, array $replaces, ?int $n = null): string
     {
         $key_sql = $replaces[$key] ?? $key;
         $comparator = $comparisonOperators[$key] ?? '=';
@@ -99,25 +96,21 @@ class PostgreSQLConditionBuilder
         throw new Exception('Unknown operator : ' . $op);
     }
 
-    private static function verifyComparisonOperators(array $comparisonOperators)
+    private static function verifyComparisonOperators(array $comparisonOperators): void
     {
-        foreach ($comparisonOperators as $key => $value)
-        {
+        foreach ($comparisonOperators as $value) {
             if (!in_array($value, ['=', '>', '<', '>=', '<=', '<>', '!=', '?', 'LIKE', 'ILIKE', 'IN', 'NOT IN'])) {
                 throw new Exception('Invalid operator: ' . $value);
             }
         }
     }
 
-    private static function verifyReplaces(array $replaces)
+    private static function verifyReplaces(array $replaces): void
     {
-        foreach ($replaces as $key => $value)
-        {
+        foreach ($replaces as $key => $value) {
             if (!preg_match('/^[A-Za-z0-9_\.]+$/', $key)) {
                 throw new Exception('Invalid replace key: ' . $key);
             }
         }
     }
-
-
 }

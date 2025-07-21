@@ -2,13 +2,18 @@
 
 A PHP library to help you to build complexes SQL queries for PostgreSQL.
 
-## Installation
+## Usage
+
+### Requirements
+
+- PHP 8.4 or higher
+- PostgreSQL database, any abstract layer (like Doctrine DBAL) or raw SQL queries.
+
+### Installation
 
 ```bash
 composer require swouters/postgresql-tools
 ```
-
-## Usage
 
 ### Condition Builder
 
@@ -109,4 +114,21 @@ PostgreSQLConditionBuilder::buildCondition([
 ]);
 
 $connexion->executeQuery("select * from users WHERE $cond", $params);
+```
+
+## Development
+
+Install :
+```
+composer install
+```
+
+Run tests
+```
+./vendor/bin/phpunit
+```
+
+Check lint
+```
+composer check
 ```

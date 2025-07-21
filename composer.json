@@ -19,10 +19,19 @@
             "email": "contact@stephanewouters.fr"
         }
     ],
+    "scripts": {
+        "check": [
+            "./vendor/bin/phpunit",
+            "vendor/bin/phpstan analyse --memory-limit=1G",
+            "vendor/bin/phpcs src"
+        ]
+    },
     "require": {
-        "php": ">=8.3"
+        "php": ">=8.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.0"
+        "phpunit/phpunit": "^11.5",
+        "phpstan/phpstan": "^2.1",
+        "squizlabs/php_codesniffer": "^3.13"
     }
 }
